@@ -1,0 +1,152 @@
+public class Main {
+    public static void main(String[] args) {
+        int[][] matrix1 = {
+            {1, 2, 3},
+            {4, 5, 6},
+            {7, 8, 9}
+        };
+
+        int[][] matrix2 = {
+            {9, 8, 7},
+            {6, 5, 4},
+            {3, 2, 1}
+        };
+
+        ThreadOne t1 = new ThreadOne(matrix1);
+        ThreadTwo t2 = new ThreadTwo(matrix2);
+        ThreadThree t3 = new ThreadThree(t1, t2);
+        ThreadFour t4 = new ThreadFour(t1, t2, t3);
+
+        t1.start();
+        t2.start();
+        t3.start();
+        t4.start();
+    }
+}
+
+class ThreadOne extends Thread {
+    private int[][] matrix;
+
+    public ThreadOne(int[][] matrix) {
+        this.matrix = matrix;
+    }
+
+    @Override
+    public void run() {
+        System.out.println("ThreadOne started.");
+        System.out.println("Matrix in ThreadOne:");
+        printMatrix(matrix);
+    }
+
+    private void printMatrix(int[][] matrix) {
+        for (int[] row : matrix) {
+            for (int num : row) {
+                System.out.print(num + " ");
+            }
+            System.out.println();
+        }
+    }
+}
+
+class ThreadTwo extends Thread {
+    private int[][] matrix;
+
+    public ThreadTwo(int[][] matrix) {
+        this.matrix = matrix;
+    }
+
+    @Override
+    public void run() {
+        System.out.println("ThreadTwo started.");
+        System.out.println("Matrix in ThreadTwo:");
+        printMatrix(matrix);
+    }
+
+    private void printMatrix(int[][] matrix) {
+        for (int[] row : matrix) {
+            for (int num : row) {
+                System.out.print(num + " ");
+            }
+            System.out.println();
+        }
+    }
+}
+
+class ThreadThree extends Thread {
+    private ThreadOne t1;
+    private ThreadTwo t2;
+
+    public ThreadThree(ThreadOne t1, ThreadTwo t2) {
+        this.t1 = t1;
+        this.t2 = t2;
+    }
+
+    @Override
+    public void run() {
+        System.out.println("ThreadThree waiting for ThreadFour to finish counting elements.");
+        try {
+            t2.join(); // Wait for ThreadFour to finish counting
+            t1.join(); // Wait for ThreadFour to finish counting
+        } catch (InterruptedException e) {
+            System.out.println("ThreadThree interrupted while waiting.");
+        }
+
+        System.out.println("ThreadThree acquired ThreadOne and ThreadTwo.");
+        int[][] result = addMatrices(t1.getMatrix(), t2.getMatrix());
+        System.out.println("Matrix Addition Result:");
+        printMatrix(result);
+    }
+
+    private int[][] addMatrices(int[][] matrix1, int[][] matrix2) {
+        int rows = matrix1.length;
+        int cols = matrix1[0].length;
+        int[][] result = new int[rows][cols];
+
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                result[i][j] = matrix1[i][j] + matrix2[i][j];
+            }
+        }
+
+        return result;
+    }
+
+    private void printMatrix(int[][] matrix) {
+        for (int[] row : matrix) {
+            for (int num : row) {
+                System.out.print(num + " ");
+            }
+            System.out.println();
+        }
+    }
+}
+
+class ThreadFour extends Thread {
+    private ThreadOne t1;
+    private ThreadTwo t2;
+    private ThreadThree t3;
+
+    public ThreadFour(ThreadOne t1, ThreadTwo t2, ThreadThree t3) {
+        this.t1 = t1;
+        this.t2 = t2;
+        this.t3 = t3;
+    }
+
+    @Override
+    public void run() {
+        System.out.println("ThreadFour counting elements in ThreadOne and ThreadTwo.");
+        int count1 = countElements(t1.getMatrix());
+        int count2 = countElements(t2.getMatrix());
+        System.out.println("ThreadFour completed counting.");
+
+        t3.start(); // Start ThreadThree after counting is done
+    }
+
+    private int countElements(int[][] matrix) {
+        int count = 0;
+        for (int[] row : matrix) {
+            count += row.length;
+        }
+        return count;
+    }
+}
